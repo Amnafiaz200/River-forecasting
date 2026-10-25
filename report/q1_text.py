@@ -151,7 +151,9 @@ def build():
     s.append(P("<b>Why this design.</b> (1) A graph keeps physical locations: stations of unequal spacing and tributary junctions are explicit, instead of being forced into a regular grid or a flat vector. "
                "(2) Alternating T and S blocks (joint space-time paths) lets a change at S1 be read at S2 at the right lag, which neither a temporal-only nor a spatial-only stack can do. "
                "(3) Lag attention is a small, interpretable way to learn changing travel times that were not supplied. "
-               "(4) Persistence plus residual starts every forecast from the best cheap baseline. (5) Quantile outputs give a usable uncertainty without a separate probabilistic model."))
+               "(4) Persistence plus residual starts every forecast from the best cheap baseline. (5) Quantile outputs give a usable uncertainty without a separate probabilistic model. "
+               "<b>Physical relationships and uncertainty (optional items).</b> No separate hydraulic simulator is run: physics enters as structure (directed graph, summed confluence inflows, travel-time prior, persistence skip) and as assumptions A6–A8, and every other relationship is learned. "
+               "Uncertainty is represented by the 10/50/90 % quantile outputs (Eq. 6–7) and by flags that widen when inputs are stale or unannounced; it is not a full predictive distribution, and its calibration must be checked on held-out floods (U10)."))
 
     # ------------------------------------------------------------------ 5
     s.append(P("5. Operation and exceptional conditions", H2))

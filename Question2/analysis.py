@@ -64,7 +64,7 @@ def fmt(x):
     """3 significant figures; scientific notation below 1e-3."""
     if x == 0:
         return "0"
-    return f"{x:.2e}" if abs(x) < 1e-3 else f"{x:.3g}"
+    return f"{x:.2e}" if abs(x) < 1e-3 else f"{x:#.3g}".rstrip(".")
 
 
 # ----------------------------------------------------------------------------- metrics

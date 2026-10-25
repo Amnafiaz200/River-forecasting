@@ -6,10 +6,7 @@ import torch
 import mm
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CANDS = {
-    "p8_k3": dict(patch=8, hidden=64, kernels=(3, 3), dilations=(1, 1)),   # 8x8 grid, 8 px per cell
-    "p4_k5_h32": dict(patch=4, hidden=32, kernels=(5, 5), dilations=(1, 1)),  # 16x16 grid, 5x5 kernels
-}
+from select_d_cfg import CANDS
 name, steps = sys.argv[1], int(sys.argv[2])
 torch.set_num_threads(int(sys.argv[3]) if len(sys.argv) > 3 else 4)
 allv = mm.load_videos(os.path.join(HERE, "data"))

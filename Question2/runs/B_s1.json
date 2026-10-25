@@ -1,0 +1,15 @@
+{
+ "model": "B",
+ "seed": 1,
+ "epochs": 6,
+ "params": 480784,
+ "hardware": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD | torch 2.10.0+cpu | 3 CPU threads",
+ "epoch_seconds": [
+  1418.8344810000272,
+  1177.4750544999843
+ ],
+ "train_loss": [
+  0.047813996598124506,
+  0.04019171105325222
+ ]
+}

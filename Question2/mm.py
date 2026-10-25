@@ -168,8 +168,12 @@ def masked_loss(pred, Y, M):
 
 
 # ----------------------------------------------------------------------------- model registry
-# Model D is chosen on the validation split only (see select_d.py); filled in once chosen.
+# Model D is chosen on the validation split only (select_d.py writes results/d_choice.json).
+import json as _json, os as _os
 D_CONFIG = dict(patch=8, hidden=64, kernels=(3, 3), dilations=(1, 1))
+_p = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "results", "d_choice.json")
+if _os.path.exists(_p):
+    D_CONFIG = {k: (tuple(v) if isinstance(v, list) else v) for k, v in _json.load(open(_p)).items() if k in ("patch", "hidden", "kernels", "dilations")}
 
 
 def build_model(name):

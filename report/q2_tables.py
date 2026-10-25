@@ -16,14 +16,14 @@ def fmt(x):
     """3 significant figures; scientific notation below 1e-3."""
     if x == 0:
         return "0"
-    return f"{x:.2e}" if abs(x) < 1e-3 else f"{x:.3g}"
+    return f"{x:.2e}" if abs(x) < 1e-3 else f"{x:#.3g}".rstrip(".")
 
 
 def ms(vals, f=fmt):
     """'mean (seed 0, seed 1)'"""
     if len(vals) == 1:
         return f(vals[0])
-    return f"{f(float(np.mean(vals)))} ({', '.join(f(v) for v in vals)})"
+    return f"{f(float(np.mean(vals)))}<br/>({', '.join(f(v) for v in vals)})"
 
 
 def seeds(spec_prefix, field, sym=False, fn=None):
@@ -52,7 +52,7 @@ def table2():
     a = [t["A_0"], t["A_1"]]
     rows.append(["Model A (mean (seed 0, seed 1))"] + [ms([x["mse_h"][h] for x in a]) for h in range(5)] +
                 [ms([x["E5_1x"] for x in a]), f"{a[0]['params']:,}"])
-    return table(rows, [0.17, 0.115, 0.115, 0.115, 0.115, 0.115, 0.115, 0.115])
+    return table(rows, [0.16, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.10])
 
 
 def table3():

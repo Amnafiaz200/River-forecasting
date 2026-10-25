@@ -26,6 +26,9 @@ def main(with_q2=True):
         import q2_text
         story.append(PageBreak())
         story += q2_text.build()
+        if os.path.exists(os.path.join(HERE, 'q2_text2.py')):
+            import q2_text2
+            story += q2_text2.build()
     import ai_disclosure
     story.append(PageBreak())
     story += ai_disclosure.build()

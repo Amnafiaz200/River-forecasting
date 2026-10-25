@@ -1,0 +1,7 @@
+12:23:11 start select_d.py p8_k3 250 3
+12:23:11 start select_d.py p4_k5_h32 250 3
+12:23:11 start train.py --model B --seed 0 --epochs 6 --threads 3
+12:23:11 start train.py --model B --seed 1 --epochs 6 --threads 3
+12:35:01 start train.py --model C --seed 0 --epochs 6 --threads 3
+model D design chosen on validation: p8_k3 {'p8_k3': 0.11808604001998901, 'p4_k5_h32': 0.11929110065102577}
+12:42:31 start train.py --model D --seed 0 --epochs 6 --threads 3
