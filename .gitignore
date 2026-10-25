@@ -1,0 +1,8 @@
+Question2/data/
+__pycache__/
+*.pyc
+.DS_Store
+Question2/dl.log
+DL4STG_PA2.pdf
+report/eqs/
+report/_p*.png
