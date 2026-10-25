@@ -1,2 +1,8 @@
 B_s1 params 480784
 B_s1 epoch 1/6 loss 0.04781 time 1419s
+B_s1 epoch 2/6 loss 0.04019 time 1177s
+B_s1 epoch 3/6 loss 0.04020 time 1062s
+B_s1 epoch 4/6 loss 0.04020 time 18350s
+B_s1 epoch 5/6 loss 0.04018 time 1283s
+B_s1 epoch 6/6 loss 0.03976 time 1276s
+B_s1 done; val200 E5 (1x) 0.03968149423599243

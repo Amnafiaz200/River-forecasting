@@ -91,7 +91,7 @@ def table56(rows_spec, timing_name="timing.json"):
         rows.append([label, ms(g("E5_1x")), ms(g("C_M")), ms(g("E_M")), ms(g("C_R")), ms(g("E_R")),
                      ms(g("E2_1x")), ms(g("E2_2x")), ms(g("E2_3x")), f"{g('params')[0]:,}",
                      ms(tr, lambda v: f"{v:.0f}"), ms(inf, lambda v: f"{v:.1f}")])
-    return table(rows, [0.095, 0.095, 0.08, 0.085, 0.08, 0.085, 0.08, 0.08, 0.08, 0.06, 0.09, 0.09], font=ParagraphStyle("c6", parent=CELL, fontSize=6.2, leading=7.8))
+    return table(rows, [0.09, 0.09, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.085, 0.09, 0.085], font=ParagraphStyle("c6", parent=CELL, fontSize=6.2, leading=7.8))
 
 
 def logged_epoch_times():

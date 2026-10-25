@@ -1,0 +1,8 @@
+C_s1 params 480784
+C_s1 epoch 1/6 loss 0.04831 time 958s
+C_s1 epoch 2/6 loss 0.04020 time 813s
+C_s1 epoch 3/6 loss 0.04003 time 838s
+C_s1 epoch 4/6 loss 0.03960 time 789s
+C_s1 epoch 5/6 loss 0.03905 time 813s
+C_s1 epoch 6/6 loss 0.03805 time 671s
+C_s1 done; val200 E5 (1x) 0.037339240312576294

@@ -5,3 +5,6 @@
 12:35:01 start train.py --model C --seed 0 --epochs 6 --threads 3
 model D design chosen on validation: p8_k3 {'p8_k3': 0.11808604001998901, 'p4_k5_h32': 0.11929110065102577}
 12:42:31 start train.py --model D --seed 0 --epochs 6 --threads 3
+18:16:25 start train.py --model D --seed 1 --epochs 6 --threads 3
+19:06:37 start train.py --model C --seed 1 --epochs 6 --threads 3
+all jobs finished
