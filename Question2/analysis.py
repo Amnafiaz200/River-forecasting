@@ -35,7 +35,7 @@ def test_videos():
 def load_model(name, seed):
     m = mm.build_model(name)
     m.load_state_dict(torch.load(os.path.join(RUNS, f"{name}_s{seed}.pt"), map_location="cpu"))
-    return m.eval()
+    return m.to(mm.DEVICE).eval()
 
 
 def make_predictor(spec):
@@ -48,6 +48,12 @@ def make_predictor(spec):
     if len(spec) == 3:
         return mm.symmetrised(f)
     return f
+
+
+def call(f, X):
+    """Run predictor f on (possibly CPU) input X; returns a CPU tensor."""
+    with torch.no_grad():
+        return f(X.to(mm.DEVICE)).cpu()
 
 
 def key(spec):
@@ -89,11 +95,14 @@ def full_metrics(f, V, light=False):
 @torch.no_grad()
 def inference_time(f, V):
     X1, _, _ = mm.make_eval(V, 1, 1)
-    f(X1[:32])  # warm-up (not timed)
+    f(X1[:32].to(mm.DEVICE))  # warm-up (not timed)
     t = 0.0
     for i in range(0, len(X1), 32):
-        xb = X1[i : i + 32]  # already on the model's device
-        t0 = time.perf_counter(); f(xb); t += time.perf_counter() - t0
+        xb = X1[i : i + 32].to(mm.DEVICE)  # batch is on the model's device before the clock starts
+        if mm.DEVICE.type == "cuda": torch.cuda.synchronize()
+        t0 = time.perf_counter(); f(xb)
+        if mm.DEVICE.type == "cuda": torch.cuda.synchronize()
+        t += time.perf_counter() - t0
     return t
 
 
@@ -101,7 +110,7 @@ def train_log(name, seed):
     return json.load(open(os.path.join(RUNS, f"{name}_s{seed}.json")))
 
 
-def cached(spec, V, light=False, timing=True):
+def cached(spec, V, light=False, timing=False):
     path = os.path.join(RES, f"metrics_{key(spec)}.json")
     if os.path.exists(path):
         d = json.load(open(path))
@@ -159,7 +168,7 @@ def np_frames(x):  # (5,1,64,64) tensor -> list of arrays
 def symmetry_panel_rows(f, V, idx, T):
     X, Y, _ = mm.make_eval(V[idx : idx + 1], 1, 1)
     with torch.no_grad():
-        fX = f(X); fTX = f(T(X)); TfX = T(fX)
+        fX = call(f, X); fTX = call(f, T(X)); TfX = T(fX)
     rows = [np_frames(X[0]) + np_frames(fX[0]),
             np_frames(T(X)[0]) + np_frames(T(Y)[0]),
             np_frames(T(X)[0]) + np_frames(fTX[0]),
@@ -232,8 +241,7 @@ def stage_table2():
     rows, rl = [], []
     for i in picks:
         X, Y, _ = mm.make_eval(V[i : i + 1], 1, 1)
-        with torch.no_grad():
-            P = f(X)
+        P = call(f, X)
         rows += [np_frames(X[0]) + np_frames(Y[0]), [None] * 5 + np_frames(P[0])]
         rl += [f"video {i}: input | truth", f"video {i}: model A (seed 0)"]
     fig = tile_grid(rows, rl, [f"in {i+1}" for i in range(5)] + [f"h={i+1}" for i in range(5)], size=0.95)
@@ -285,8 +293,7 @@ def fig5(f, V, vi, path, who):
     rows, rl = [], []
     for k in (1, 2, 3):
         X, Y, M = mm.make_eval(V[vi : vi + 1], k, 1)
-        with torch.no_grad():
-            P = f(X)
+        P = call(f, X)
         rows += [np_frames(X[0]) + np_frames(Y[0][:2]), [None] * 5 + np_frames(P[0][:2])]
         rl += [f"{k}x: input | truth", f"{k}x: {who}"]
     fig = tile_grid(rows, rl, [f"in {i+1}" for i in range(5)] + ["h=1", "h=2"], size=0.95)
@@ -298,6 +305,39 @@ def stage_models(names):
     for spec in names:
         d = cached(spec, V)
         print(key(spec), {k: fmt(v) for k, v in d.items() if k != "mse_h"}, flush=True)
+
+
+def stage_timing(specs):
+    """Solo timings (run when nothing else is using the CPU).
+    * training: mean wall-clock of 12 real training steps (batch 32, incl. window sampling) x 250 steps = one epoch
+    * inference: wall-clock to predict the 1,000 original test videos at batch size 32, model.eval(), torch.no_grad()"""
+    import train as T
+    V = test_videos()
+    tr = mm.load_videos(os.path.join(HERE, "data"))[mm.TRAIN]
+    out = {}
+    done_train = {}
+    for spec in specs:
+        name, seed = spec[0], spec[1]
+        k = key(spec)
+        d = {}
+        if len(spec) == 2:
+            torch.manual_seed(0)
+            m = mm.build_model(name).to(mm.DEVICE, memory_format=torch.channels_last); m.train()
+            opt = torch.optim.Adam(m.parameters(), 1e-3); gen = torch.Generator().manual_seed(7)
+            ts = []
+            for i in range(14):
+                idx = torch.randperm(8000, generator=gen)[:32]
+                t0 = time.perf_counter()
+                X, Y, M = [a.to(mm.DEVICE) for a in T.sample_batch(tr, idx, name, gen)]
+                opt.zero_grad(); mm.masked_loss(m(X), Y, M).backward(); opt.step()
+                if mm.DEVICE.type == "cuda": torch.cuda.synchronize()
+                ts.append(time.perf_counter() - t0)
+            d["train_s_per_epoch_solo"] = float(np.mean(ts[2:]) * 250)
+        f = make_predictor(spec)
+        d["inference_s"] = inference_time(f, V)
+        out[k] = d
+        print(k, d, flush=True)
+    json.dump(out, open(os.path.join(RES, "timing.json"), "w"), indent=1)
 
 
 def stage_final(name):
@@ -320,5 +360,11 @@ if __name__ == "__main__":
         for a in sys.argv[2:]:  # e.g. B:0 D:1 D:0:sym
             p = a.split(":"); names.append((p[0], int(p[1])) + (("sym",) if len(p) == 3 else ()))
         stage_models(names)
+    elif st == "timing":
+        specs = []
+        for a in sys.argv[2:]:
+            p = a.split(":"); specs.append((p[0], int(p[1])) + (("sym",) if len(p) == 3 else ()))
+        torch.set_num_threads(6)
+        stage_timing(specs)
     elif st == "final":
         stage_final(sys.argv[2])

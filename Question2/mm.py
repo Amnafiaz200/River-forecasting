@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # ----------------------------------------------------------------------------- data
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 TRAIN = slice(0, 8000)
 VAL = slice(8000, 9000)
 TEST = slice(9000, 10000)
@@ -155,7 +157,7 @@ def per_horizon_mse(pred, target, mask=None):
 def predict(f, X, bs=32):
     out = []
     for i in range(0, len(X), bs):
-        out.append(f(X[i : i + bs]))
+        out.append(f(X[i : i + bs].to(DEVICE)).cpu())
     return torch.cat(out)
 
 

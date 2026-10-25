@@ -15,7 +15,7 @@ torch.set_num_threads(int(sys.argv[3]) if len(sys.argv) > 3 else 4)
 allv = mm.load_videos(os.path.join(HERE, "data"))
 tr, va = allv[mm.TRAIN], mm.to_float(allv[mm.VAL])
 torch.manual_seed(0)
-model = mm.ConvLSTMForecaster(**CANDS[name]).to(memory_format=torch.channels_last)
+model = mm.ConvLSTMForecaster(**CANDS[name]).to(mm.DEVICE, memory_format=torch.channels_last)
 opt = torch.optim.Adam(model.parameters(), 1e-3)
 gen = torch.Generator().manual_seed(1000)
 import train as T
@@ -25,6 +25,7 @@ while step < steps:
     for i in range(0, len(perm), 32):
         if step >= steps: break
         X, Y, M = T.sample_batch(tr, perm[i:i+32], "D", gen)
+        X, Y, M = X.to(mm.DEVICE), Y.to(mm.DEVICE), M.to(mm.DEVICE)
         opt.zero_grad(); mm.masked_loss(model(X), Y, M).backward(); opt.step(); step += 1
 model.eval()
 out = {"candidate": name, "params": mm.n_params(model), "steps": steps, "seconds": time.perf_counter() - t0}

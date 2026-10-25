@@ -52,12 +52,12 @@ def main():
     val = mm.load_videos(os.path.join(HERE, "data"))[mm.VAL]
 
     torch.manual_seed(args.seed)  # initialisation
-    model = mm.build_model(args.model).to(memory_format=torch.channels_last)  # same maths, ~12% faster on CPU
+    model = mm.build_model(args.model).to(mm.DEVICE, memory_format=torch.channels_last)  # same maths, ~12% faster on CPU
     gen = torch.Generator().manual_seed(1000 + args.seed)  # shuffling, windows, augmentation
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     tag = f"{args.model}_s{args.seed}"
     log = {"model": args.model, "seed": args.seed, "epochs": args.epochs, "params": mm.n_params(model),
-           "hardware": f"{platform.processor()} | torch {torch.__version__} | {args.threads} CPU threads",
+           "hardware": f"{platform.processor() if mm.DEVICE.type == 'cpu' else torch.cuda.get_device_name(0)} | torch {torch.__version__} | {args.threads} CPU threads",
            "epoch_seconds": [], "train_loss": []}
     print(tag, "params", log["params"], flush=True)
 
@@ -68,12 +68,14 @@ def main():
         tot, n = 0.0, 0
         for i in range(0, len(perm), 32):
             idx = perm[i : i + 32]
-            X, Y, M = sample_batch(videos, idx, args.model, gen)
+            X, Y, M = [t.to(mm.DEVICE) for t in sample_batch(videos, idx, args.model, gen)]
             opt.zero_grad(set_to_none=True)
             loss = mm.masked_loss(model(X), Y, M)
             loss.backward()
             opt.step()
             tot += loss.item() * len(idx); n += len(idx)
+        if mm.DEVICE.type == "cuda":
+            torch.cuda.synchronize()
         dt = time.perf_counter() - t0
         log["epoch_seconds"].append(dt); log["train_loss"].append(tot / n)
         print(f"{tag} epoch {ep+1}/{args.epochs} loss {tot/n:.5f} time {dt:.0f}s", flush=True)
@@ -84,7 +86,7 @@ def main():
     model.eval()
     X, Y, M = mm.make_eval(mm.to_float(val[:200]))
     with torch.no_grad():
-        log["val200_E5_1x"] = mm.per_horizon_mse(model(X), Y).mean().item()
+        log["val200_E5_1x"] = mm.per_horizon_mse(model(X.to(mm.DEVICE)).cpu(), Y).mean().item()
     json.dump(log, open(os.path.join(args.out, tag + ".json"), "w"), indent=1)
     print(tag, "done; val200 E5 (1x)", log["val200_E5_1x"], flush=True)
 

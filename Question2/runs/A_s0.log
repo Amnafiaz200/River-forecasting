@@ -1,1 +1,8 @@
 A_s0 params 480784
+A_s0 epoch 1/6 loss 0.04610 time 646s
+A_s0 epoch 2/6 loss 0.03966 time 596s
+A_s0 epoch 3/6 loss 0.03863 time 592s
+A_s0 epoch 4/6 loss 0.03704 time 671s
+A_s0 epoch 5/6 loss 0.03521 time 734s
+A_s0 epoch 6/6 loss 0.03366 time 729s
+A_s0 done; val200 E5 (1x) 0.03317701816558838
