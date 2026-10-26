@@ -6,3 +6,24 @@ Question2/dl.log
 DL4STG_PA2.pdf
 report/eqs/
 report/_p*.png
+
+# pristine copies of the Colab download at the project root (the used copies are in Question2/)
+/runs/
+/results/
+/gifs/
+
+# old 6-epoch preliminary run: keep logs/JSON/figures/GIFs for transparency, but never the old weights or the old PDF
+Question2/prelim_6epoch/**/*.pt
+Question2/prelim_6epoch/report/*.pdf
+# the report PDF is submitted on the LMS, not in the repository (sources and figures in report/ rebuild it)
+report/Assignment2_Report.pdf
+*.tmp
+.ipynb_checkpoints/
+Question2/prelim_6epoch/report/*.py
+report/latex/main.log
+report/latex/main.pdf
+report/latex/*.aux
+/report/
+/Question1/
+/Question2/prelim_6epoch/
+/Question2/schedule.py

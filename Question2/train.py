@@ -37,38 +37,75 @@ def sample_batch(videos, idx, model_name, gen):
     return X, Y, M
 
 
+def is_complete(path, epochs):
+    """True if `path` (a run .json) is a finished, non-smoke run with exactly `epochs` epochs."""
+    if not os.path.exists(path):
+        return False
+    try:
+        d = json.load(open(path))
+    except Exception:
+        return False
+    return d.get("epochs") == epochs and len(d.get("epoch_seconds", [])) == epochs and "val200_E5_1x" in d and not d.get("smoke")
+
+
+def atomic_json(obj, path):
+    tmp = path + ".tmp"
+    json.dump(obj, open(tmp, "w"), indent=1)
+    os.replace(tmp, path)
+
+
+def atomic_save(state, path):
+    tmp = path + ".tmp"
+    torch.save(state, tmp)
+    os.replace(tmp, path)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True, choices=list(SPEED_AUG))
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--epochs", type=int, default=30)
-    ap.add_argument("--threads", type=int, default=6)
+    ap.add_argument("--threads", type=int, default=0, help="CPU threads (0 = PyTorch default)")
     ap.add_argument("--out", default=os.path.join(HERE, "runs"))
+    ap.add_argument("--skip_done", action="store_true", help="exit immediately if this run is already complete in --out")
+    ap.add_argument("--smoke_steps", type=int, default=0, help="TEST ONLY: stop each epoch after this many batches")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
-    torch.set_num_threads(args.threads)
+    tag = f"{args.model}_s{args.seed}"
+    if args.skip_done and is_complete(os.path.join(args.out, tag + ".json"), args.epochs):
+        print(tag, "already complete -> skipped", flush=True)
+        return
+    mm.require_gpu()
+    if args.threads:
+        torch.set_num_threads(args.threads)
 
-    videos = mm.load_videos(os.path.join(HERE, "data"))[mm.TRAIN]  # uint8
-    val = mm.load_videos(os.path.join(HERE, "data"))[mm.VAL]
+    allv = mm.load_videos(os.path.join(HERE, "data"))  # uint8 (10000, 20, 1, 64, 64)
+    videos, val = allv[mm.TRAIN], allv[mm.VAL]
 
     torch.manual_seed(args.seed)  # initialisation
-    model = mm.build_model(args.model).to(mm.DEVICE, memory_format=torch.channels_last)  # same maths, ~12% faster on CPU
+    model = mm.build_model(args.model).to(mm.DEVICE, memory_format=torch.channels_last)  # same maths, faster convs
     gen = torch.Generator().manual_seed(1000 + args.seed)  # shuffling, windows, augmentation
-    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
-    tag = f"{args.model}_s{args.seed}"
-    log = {"model": args.model, "seed": args.seed, "epochs": args.epochs, "params": mm.n_params(model),
-           "hardware": f"{platform.processor() if mm.DEVICE.type == 'cpu' else torch.cuda.get_device_name(0)} | torch {torch.__version__} | {args.threads} CPU threads",
-           "epoch_seconds": [], "train_loss": []}
-    print(tag, "params", log["params"], flush=True)
+    opt = torch.optim.Adam(model.parameters(), lr=1e-3)  # constant lr, no schedule
+    dev_name = torch.cuda.get_device_name(0) if mm.DEVICE.type == "cuda" else platform.processor()
+    log = {"model": args.model, "seed": args.seed, "epochs": args.epochs, "params": mm.n_params(model), "batch_size": 32, "lr": 1e-3,
+           "device": mm.DEVICE.type, "hardware": f"{dev_name} | torch {torch.__version__}",
+           "epoch_seconds": [], "train_loss": [], "smoke": bool(args.smoke_steps)}
+    if args.model in ("D", "DB"):
+        log["d_config"] = {k: list(v) if isinstance(v, tuple) else v for k, v in mm.D_CONFIG.items()}
+    print(tag, "params", log["params"], "device", log["hardware"], flush=True)
 
     for ep in range(args.epochs):
         model.train()
+        if mm.DEVICE.type == "cuda":
+            torch.cuda.synchronize()
         t0 = time.perf_counter()
-        perm = torch.randperm(len(videos), generator=gen)
+        perm = torch.randperm(len(videos), generator=gen)  # one epoch = one pass over the 8,000 training videos, shuffled
         tot, n = 0.0, 0
-        for i in range(0, len(perm), 32):
+        for bi, i in enumerate(range(0, len(perm), 32)):
+            if args.smoke_steps and bi >= args.smoke_steps:
+                break
             idx = perm[i : i + 32]
-            X, Y, M = [t.to(mm.DEVICE) for t in sample_batch(videos, idx, args.model, gen)]
+            X, Y, M = [t.to(mm.DEVICE) for t in sample_batch(videos, idx, args.model, gen)]  # one random window per video
             opt.zero_grad(set_to_none=True)
             loss = mm.masked_loss(model(X), Y, M)
             loss.backward()
@@ -78,16 +115,16 @@ def main():
             torch.cuda.synchronize()
         dt = time.perf_counter() - t0
         log["epoch_seconds"].append(dt); log["train_loss"].append(tot / n)
-        print(f"{tag} epoch {ep+1}/{args.epochs} loss {tot/n:.5f} time {dt:.0f}s", flush=True)
-        torch.save(model.state_dict(), os.path.join(args.out, tag + ".pt"))  # final-epoch weights
-        json.dump(log, open(os.path.join(args.out, tag + ".json"), "w"), indent=1)
+        print(f"{tag} epoch {ep+1}/{args.epochs} loss {tot/n:.5f} time {dt:.1f}s", flush=True)
+        atomic_save(model.state_dict(), os.path.join(args.out, tag + ".pt"))  # final-epoch weights are what is kept
+        atomic_json(log, os.path.join(args.out, tag + ".json"))
 
-    # implementation check on validation (never used on test)
+    # implementation check on validation videos (never on test)
     model.eval()
     X, Y, M = mm.make_eval(mm.to_float(val[:200]))
     with torch.no_grad():
         log["val200_E5_1x"] = mm.per_horizon_mse(model(X.to(mm.DEVICE)).cpu(), Y).mean().item()
-    json.dump(log, open(os.path.join(args.out, tag + ".json"), "w"), indent=1)
+    atomic_json(log, os.path.join(args.out, tag + ".json"))
     print(tag, "done; val200 E5 (1x)", log["val200_E5_1x"], flush=True)
 
 

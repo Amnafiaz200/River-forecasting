@@ -7,7 +7,6 @@ import torch
 import analysis as an
 import mm
 
-torch.set_num_threads(2)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -76,6 +75,7 @@ def main(spec):
 
 
 if __name__ == "__main__":
+    mm.require_gpu()
     for a in sys.argv[1:]:
         p = a.split(":")
         main((p[0], int(p[1])) + (("sym",) if len(p) == 3 else ()))

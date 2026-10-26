@@ -1,0 +1,82 @@
+{
+ "A_s0": {
+  "file": "runs/A_s0.pt",
+  "sha256": "e3ce272644e017da423139aac4d58d394a955708ea2c9e672b041c8bd715e3a1",
+  "bytes": 1925973,
+  "epochs": 30,
+  "params": 480784,
+  "seed": 0,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.022419288754463196
+ },
+ "A_s1": {
+  "file": "runs/A_s1.pt",
+  "sha256": "2585b1446116e9e53d2912f1f06d50855943b4c04cd542fe6f878fd0e5298ab0",
+  "bytes": 1925973,
+  "epochs": 30,
+  "params": 480784,
+  "seed": 1,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.02187446504831314
+ },
+ "B_s0": {
+  "file": "runs/B_s0.pt",
+  "sha256": "57d37ce68a6e6cde03a3e860fdb9c8146455b1eae2001e06ab224b88569e218d",
+  "bytes": 1925973,
+  "epochs": 30,
+  "params": 480784,
+  "seed": 0,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.023584086447954178
+ },
+ "B_s1": {
+  "file": "runs/B_s1.pt",
+  "sha256": "b8a789506e2fe7556a2148e43ac6a53f93617b8e8fa186e615f96d0d70f53bd5",
+  "bytes": 1925973,
+  "epochs": 30,
+  "params": 480784,
+  "seed": 1,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.022329019382596016
+ },
+ "C_s0": {
+  "file": "runs/C_s0.pt",
+  "sha256": "ffa658804b538e18a319c7b6331733116c92670361898f68c58024dd6f825e60",
+  "bytes": 1925973,
+  "epochs": 30,
+  "params": 480784,
+  "seed": 0,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.026554418727755547
+ },
+ "C_s1": {
+  "file": "runs/C_s1.pt",
+  "sha256": "c9bf2ab510471f95a6383201ae056eaa6cf64f468e3228eb0d871b340433ba0e",
+  "bytes": 1925973,
+  "epochs": 30,
+  "params": 480784,
+  "seed": 1,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.0289278756827116
+ },
+ "D_s0": {
+  "file": "runs/D_s0.pt",
+  "sha256": "868865c3074d55b50295f63c9df78c4927b69919831370917ac2b148d4da23b8",
+  "bytes": 2380821,
+  "epochs": 30,
+  "params": 594496,
+  "seed": 0,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.02916613779962063
+ },
+ "D_s1": {
+  "file": "runs/D_s1.pt",
+  "sha256": "17c4cd983801c152b56c694fa325d38e0df79bdd8d81941796a6836c742f1dc0",
+  "bytes": 2380821,
+  "epochs": 30,
+  "params": 594496,
+  "seed": 1,
+  "hardware": "Tesla T4 | torch 2.11.0+cu130",
+  "reported_E5_1x": 0.027646085247397423
+ }
+}

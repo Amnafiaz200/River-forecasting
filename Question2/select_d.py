@@ -1,6 +1,6 @@
 """Choose model D's design on the VALIDATION split only (never the test split).
 Each candidate is trained with the speed-augmented protocol (seed 0, same optimiser) for a short budget and scored on validation:
-score = E(5)@1x + E(2)@2x + E(2)@3x  (lower is better).  Usage: python select_d.py CANDIDATE STEPS"""
+score = E(5)@1x + E(2)@2x + E(2)@3x  (lower is better).  Usage: python select_d.py CANDIDATE STEPS   (then python choose_d.py)"""
 import json, os, sys, time
 import torch
 import mm
@@ -8,9 +8,14 @@ import mm
 HERE = os.path.dirname(os.path.abspath(__file__))
 from select_d_cfg import CANDS
 name, steps = sys.argv[1], int(sys.argv[2])
-torch.set_num_threads(int(sys.argv[3]) if len(sys.argv) > 3 else 4)
+if len(sys.argv) > 3:
+    torch.set_num_threads(int(sys.argv[3]))
+mm.require_gpu()
 allv = mm.load_videos(os.path.join(HERE, "data"))
 tr, va = allv[mm.TRAIN], mm.to_float(allv[mm.VAL])
+if int(os.environ.get("SMOKE_TEST_N", "0")):  # TEST ONLY
+    va = va[: int(os.environ["SMOKE_TEST_N"])]
+    print("WARNING: SMOKE_TEST_N set, validation subset only", flush=True)
 torch.manual_seed(0)
 model = mm.ConvLSTMForecaster(**CANDS[name]).to(mm.DEVICE, memory_format=torch.channels_last)
 opt = torch.optim.Adam(model.parameters(), 1e-3)

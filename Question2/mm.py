@@ -1,4 +1,5 @@
 """Shared code for Question 2 (Motion or Memory?): data, transforms, windows, models, metrics."""
+import os
 import time
 import numpy as np
 import torch
@@ -7,6 +8,13 @@ import torch.nn.functional as F
 
 # ----------------------------------------------------------------------------- data
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def require_gpu():
+    """Stop instead of silently training/timing on the CPU (set ALLOW_CPU=1 only for smoke tests)."""
+    if DEVICE.type != "cuda" and os.environ.get("ALLOW_CPU") != "1":
+        raise SystemExit("No CUDA GPU found. In Colab: Runtime > Change runtime type > T4 GPU, then restart the runtime. "
+                         "(Set ALLOW_CPU=1 only for tiny smoke tests.)")
 
 TRAIN = slice(0, 8000)
 VAL = slice(8000, 9000)

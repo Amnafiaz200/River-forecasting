@@ -21,18 +21,35 @@ RES = os.path.join(HERE, "results"); os.makedirs(RES, exist_ok=True)
 REP = os.path.join(HERE, "..", "report"); os.makedirs(REP, exist_ok=True)
 GIF = os.path.join(HERE, "gifs"); os.makedirs(GIF, exist_ok=True)
 RUNS = os.path.join(HERE, "runs")
-torch.set_num_threads(6)
 
+EXPECTED_EPOCHS = int(os.environ.get("EXPECTED_EPOCHS", "30"))  # handout protocol; analysis refuses other runs
 R90 = lambda x: mm.rot(x, 1)
 TRANS = {"M": mm.mirror, "R": R90}
 
 
 # ----------------------------------------------------------------------------- loading / predictors
 def test_videos():
-    return mm.to_float(mm.load_videos(os.path.join(HERE, "data"))[mm.TEST])
+    V = mm.to_float(mm.load_videos(os.path.join(HERE, "data"))[mm.TEST])
+    n = int(os.environ.get("SMOKE_TEST_N", "0"))  # TEST ONLY: never set this for the real run
+    if n:
+        print(f"WARNING: SMOKE_TEST_N={n}: using only the first {n} test videos", flush=True)
+        V = V[:n]
+    return V
+
+
+def check_run(name, seed):
+    """Refuse to analyse a run that is not a complete, non-smoke run of exactly EXPECTED_EPOCHS epochs (guards against old 6-epoch files)."""
+    p = os.path.join(RUNS, f"{name}_s{seed}.json")
+    if not os.path.exists(p):
+        raise SystemExit(f"missing training log {p}")
+    d = json.load(open(p))
+    if d.get("epochs") != EXPECTED_EPOCHS or len(d.get("epoch_seconds", [])) != EXPECTED_EPOCHS or d.get("smoke") or "val200_E5_1x" not in d:
+        raise SystemExit(f"{p} is not a complete {EXPECTED_EPOCHS}-epoch run (epochs={d.get('epochs')}, logged={len(d.get('epoch_seconds', []))}, smoke={d.get('smoke')})")
+    return d
 
 
 def load_model(name, seed):
+    check_run(name, seed)
     m = mm.build_model(name)
     m.load_state_dict(torch.load(os.path.join(RUNS, f"{name}_s{seed}.pt"), map_location="cpu"))
     return m.to(mm.DEVICE).eval()
@@ -114,7 +131,8 @@ def cached(spec, V, light=False, timing=False):
     path = os.path.join(RES, f"metrics_{key(spec)}.json")
     if os.path.exists(path):
         d = json.load(open(path))
-        if light or "C_M" in d:
+        fresh = isinstance(spec, str) or d.get("epochs") == EXPECTED_EPOCHS  # ignore caches written by other (e.g. 6-epoch) runs
+        if fresh and (light or "C_M" in d):
             return d
     f = make_predictor(spec)
     d, _ = full_metrics(f, V, light=light)
@@ -136,13 +154,13 @@ def n_comp(frame):
     return cv2.connectedComponents((frame[0].numpy() > 0.2).astype(np.uint8))[0] - 1
 
 
-def tile_grid(rows, row_labels, col_labels, title=None, fig=None, size=0.78):
+def tile_grid(rows, row_labels, col_labels, title=None, fig=None, size=0.78, fs=5.5, left=0.12):
     """rows: list (per row) of lists (per column) of 64x64 numpy arrays or None."""
     nr, nc = len(rows), len(rows[0])
     own = fig is None
     if own:
         fig = plt.figure(figsize=(nc * size + 0.9, nr * size + 0.7))
-    axs = fig.subplots(nr, nc, gridspec_kw=dict(wspace=0.04, hspace=0.04, left=0.12, right=0.995, top=0.88, bottom=0.01), squeeze=False)
+    axs = fig.subplots(nr, nc, gridspec_kw=dict(wspace=0.04, hspace=0.04, left=left, right=0.995, top=0.88, bottom=0.01), squeeze=False)
     for r in range(nr):
         for c in range(nc):
             ax = axs[r][c]; ax.set_xticks([]); ax.set_yticks([])
@@ -152,10 +170,10 @@ def tile_grid(rows, row_labels, col_labels, title=None, fig=None, size=0.78):
                 ax.axis("off"); continue
             ax.imshow(rows[r][c], cmap="gray", vmin=0, vmax=1)
             if r == 0 and col_labels:
-                ax.set_title(col_labels[c], fontsize=5.5, pad=1.5)
-        axs[r][0].set_ylabel(row_labels[r], fontsize=5.5, rotation=0, ha="right", va="center", labelpad=2)
+                ax.set_title(col_labels[c], fontsize=fs, pad=1.5)
+        axs[r][0].set_ylabel(row_labels[r], fontsize=fs, rotation=0, ha="right", va="center", labelpad=2)
     if title:
-        fig.suptitle(title, fontsize=7, y=0.995)
+        fig.suptitle(title, fontsize=fs + 1.5, y=0.995)
     if own:
         return fig
     return axs
@@ -215,6 +233,8 @@ def pick_fig2(V):
             ov = i
         if len(sep) == 2 and ov is not None:
             break
+    if ov is None:  # fallback: the video with the most single-blob frames among the targets
+        ov = max(range(len(V)), key=lambda i: sum(n_comp(V[i, f - 1]) == 1 for f in range(6, 11)))
     return sep + [ov]
 
 
@@ -308,35 +328,17 @@ def stage_models(names):
 
 
 def stage_timing(specs):
-    """Solo timings (run when nothing else is using the CPU).
-    * training: mean wall-clock of 12 real training steps (batch 32, incl. window sampling) x 250 steps = one epoch
-    * inference: wall-clock to predict the 1,000 original test videos at batch size 32, model.eval(), torch.no_grad()"""
-    import train as T
+    """Inference timing (run alone on the GPU): wall-clock to predict the 1,000 original test videos (1x, t=1) at batch size 32
+    under model.eval() and torch.no_grad(), each batch already on the device; symmetrised models include all 8 transformations,
+    forward passes, inverse transformations and the averaging. Training time per epoch is NOT estimated here: it is the mean of the
+    30 logged epoch times in runs/*.json (runs are executed one at a time)."""
     V = test_videos()
-    tr = mm.load_videos(os.path.join(HERE, "data"))[mm.TRAIN]
     out = {}
-    done_train = {}
     for spec in specs:
-        name, seed = spec[0], spec[1]
-        k = key(spec)
-        d = {}
-        if len(spec) == 2:
-            torch.manual_seed(0)
-            m = mm.build_model(name).to(mm.DEVICE, memory_format=torch.channels_last); m.train()
-            opt = torch.optim.Adam(m.parameters(), 1e-3); gen = torch.Generator().manual_seed(7)
-            ts = []
-            for i in range(14):
-                idx = torch.randperm(8000, generator=gen)[:32]
-                t0 = time.perf_counter()
-                X, Y, M = [a.to(mm.DEVICE) for a in T.sample_batch(tr, idx, name, gen)]
-                opt.zero_grad(); mm.masked_loss(m(X), Y, M).backward(); opt.step()
-                if mm.DEVICE.type == "cuda": torch.cuda.synchronize()
-                ts.append(time.perf_counter() - t0)
-            d["train_s_per_epoch_solo"] = float(np.mean(ts[2:]) * 250)
         f = make_predictor(spec)
-        d["inference_s"] = inference_time(f, V)
-        out[k] = d
-        print(k, d, flush=True)
+        out[key(spec)] = {"inference_s": inference_time(f, V), "device": mm.DEVICE.type,
+                          "hardware": torch.cuda.get_device_name(0) if mm.DEVICE.type == "cuda" else "cpu"}
+        print(key(spec), out[key(spec)], flush=True)
     json.dump(out, open(os.path.join(RES, "timing.json"), "w"), indent=1)
 
 
@@ -350,6 +352,7 @@ def stage_final(name):
 
 
 if __name__ == "__main__":
+    mm.require_gpu()
     st = sys.argv[1]
     if st == "table2":
         stage_table2()
@@ -364,7 +367,6 @@ if __name__ == "__main__":
         specs = []
         for a in sys.argv[2:]:
             p = a.split(":"); specs.append((p[0], int(p[1])) + (("sym",) if len(p) == 3 else ()))
-        torch.set_num_threads(6)
         stage_timing(specs)
     elif st == "final":
         stage_final(sys.argv[2])

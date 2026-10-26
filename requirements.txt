@@ -1,0 +1,9 @@
+# Question 2 (Moving MNIST, ConvLSTM) and the report builder. Versions used for the final run are in the comments.
+torch>=2.6            # Colab T4 run: 2.11.0+cu130 (local CPU checks: 2.10.0)
+torchvision>=0.21     # 0.26.0 (Colab) -- torchvision.datasets.MovingMNIST
+numpy>=2              # 2.1.3 (Colab)
+opencv-python>=4.8    # 4.14.0 (Colab; opencv-python-headless also works) -- Farneback optical flow, connected components
+matplotlib>=3.9
+pillow>=10            # GIFs
+reportlab>=4.0        # only for report/build_report.py
+# Question 1 needs only the supplied Question1/requirements.txt (it is the optional companion notebook).

@@ -1,8 +1,42 @@
-C_s0 params 480784
-C_s0 epoch 1/6 loss 0.04661 time 1213s
-C_s0 epoch 2/6 loss 0.03995 time 1107s
-C_s0 epoch 3/6 loss 0.03937 time 18163s
-C_s0 epoch 4/6 loss 0.03855 time 1149s
-C_s0 epoch 5/6 loss 0.03759 time 1181s
-C_s0 epoch 6/6 loss 0.03673 time 1180s
-C_s0 done; val200 E5 (1x) 0.03616130352020264
+C_s0 params 480784 device Tesla T4 | torch 2.11.0+cu130
+C_s0 epoch 1/30 loss 0.04661 time 30.0s
+C_s0 epoch 2/30 loss 0.03995 time 29.9s
+C_s0 epoch 3/30 loss 0.03937 time 29.5s
+C_s0 epoch 4/30 loss 0.03857 time 29.9s
+C_s0 epoch 5/30 loss 0.03758 time 29.9s
+C_s0 epoch 6/30 loss 0.03673 time 29.7s
+C_s0 epoch 7/30 loss 0.03605 time 29.8s
+C_s0 epoch 8/30 loss 0.03537 time 29.8s
+C_s0 epoch 9/30 loss 0.03491 time 29.9s
+C_s0 params 480784 device Tesla T4 | torch 2.11.0+cu130
+C_s0 epoch 1/30 loss 0.04661 time 30.9s
+C_s0 epoch 2/30 loss 0.03995 time 31.3s
+C_s0 epoch 3/30 loss 0.03937 time 29.9s
+C_s0 epoch 4/30 loss 0.03859 time 30.5s
+C_s0 epoch 5/30 loss 0.03766 time 30.4s
+C_s0 epoch 6/30 loss 0.03662 time 30.4s
+C_s0 epoch 7/30 loss 0.03586 time 30.4s
+C_s0 epoch 8/30 loss 0.03499 time 30.4s
+C_s0 epoch 9/30 loss 0.03430 time 30.4s
+C_s0 epoch 10/30 loss 0.03392 time 30.4s
+C_s0 epoch 11/30 loss 0.03344 time 30.4s
+C_s0 epoch 12/30 loss 0.03312 time 30.4s
+C_s0 epoch 13/30 loss 0.03289 time 30.5s
+C_s0 epoch 14/30 loss 0.03277 time 30.5s
+C_s0 epoch 15/30 loss 0.03245 time 30.4s
+C_s0 epoch 16/30 loss 0.03240 time 30.4s
+C_s0 epoch 17/30 loss 0.03221 time 30.4s
+C_s0 epoch 18/30 loss 0.03199 time 30.5s
+C_s0 epoch 19/30 loss 0.03192 time 30.4s
+C_s0 epoch 20/30 loss 0.03167 time 30.4s
+C_s0 epoch 21/30 loss 0.03146 time 30.4s
+C_s0 epoch 22/30 loss 0.03133 time 30.4s
+C_s0 epoch 23/30 loss 0.03118 time 30.4s
+C_s0 epoch 24/30 loss 0.03107 time 30.5s
+C_s0 epoch 25/30 loss 0.03084 time 30.4s
+C_s0 epoch 26/30 loss 0.03075 time 30.4s
+C_s0 epoch 27/30 loss 0.03052 time 30.5s
+C_s0 epoch 28/30 loss 0.03042 time 30.4s
+C_s0 epoch 29/30 loss 0.03032 time 30.4s
+C_s0 epoch 30/30 loss 0.03015 time 30.4s
+C_s0 done; val200 E5 (1x) 0.02698606438934803

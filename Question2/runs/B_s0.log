@@ -1,8 +1,33 @@
-B_s0 params 480784
-B_s0 epoch 1/6 loss 0.04609 time 1425s
-B_s0 epoch 2/6 loss 0.03969 time 1186s
-B_s0 epoch 3/6 loss 0.03869 time 1068s
-B_s0 epoch 4/6 loss 0.03710 time 18373s
-B_s0 epoch 5/6 loss 0.03521 time 1272s
-B_s0 epoch 6/6 loss 0.03366 time 1279s
-B_s0 done; val200 E5 (1x) 0.03321877121925354
+B_s0 params 480784 device Tesla T4 | torch 2.11.0+cu130
+B_s0 epoch 1/30 loss 0.04609 time 31.7s
+B_s0 epoch 2/30 loss 0.03969 time 29.4s
+B_s0 epoch 3/30 loss 0.03869 time 30.0s
+B_s0 epoch 4/30 loss 0.03710 time 30.5s
+B_s0 epoch 5/30 loss 0.03521 time 29.8s
+B_s0 epoch 6/30 loss 0.03361 time 30.4s
+B_s0 epoch 7/30 loss 0.03231 time 30.3s
+B_s0 epoch 8/30 loss 0.03129 time 30.2s
+B_s0 epoch 9/30 loss 0.03054 time 30.4s
+B_s0 epoch 10/30 loss 0.03002 time 30.4s
+B_s0 epoch 11/30 loss 0.02962 time 30.4s
+B_s0 epoch 12/30 loss 0.02919 time 30.4s
+B_s0 epoch 13/30 loss 0.02878 time 30.3s
+B_s0 epoch 14/30 loss 0.02841 time 30.4s
+B_s0 epoch 15/30 loss 0.02810 time 30.4s
+B_s0 epoch 16/30 loss 0.02784 time 30.4s
+B_s0 epoch 17/30 loss 0.02755 time 30.4s
+B_s0 epoch 18/30 loss 0.02718 time 30.4s
+B_s0 epoch 19/30 loss 0.02688 time 30.4s
+B_s0 epoch 20/30 loss 0.02664 time 30.4s
+B_s0 epoch 21/30 loss 0.02635 time 30.3s
+B_s0 epoch 22/30 loss 0.02593 time 30.3s
+B_s0 epoch 23/30 loss 0.02571 time 30.3s
+B_s0 epoch 24/30 loss 0.02531 time 30.3s
+B_s0 epoch 25/30 loss 0.02503 time 30.4s
+B_s0 epoch 26/30 loss 0.02460 time 30.4s
+B_s0 epoch 27/30 loss 0.02442 time 30.4s
+B_s0 epoch 28/30 loss 0.02401 time 30.4s
+B_s0 epoch 29/30 loss 0.02376 time 30.4s
+B_s0 epoch 30/30 loss 0.02355 time 30.4s
+B_s0 done; val200 E5 (1x) 0.023692430928349495
+B_s0 already complete -> skipped
